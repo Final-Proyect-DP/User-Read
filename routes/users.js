@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const User = require('../models/user');
+const logger = require('../config/logger');
+const { verifyToken } = require('../middlewares/authMiddleware');
+const handleErrors = require('../utils/handleErrors');
 
 /**
  * @swagger
@@ -53,33 +56,20 @@ const User = require('../models/User');
  *       401:
  *         description: Token no válido
  */
-router.get('/:id', async (req, res) => {
-  const token = req.query.token;
+router.get('/:id', verifyToken, async (req, res) => {
   const userId = req.params.id;
 
-  if (!token) {
-    return res.status(401).json({ message: 'Token no válido' });
+  try {
+    const user = await User.findById(userId, 'username email firstName lastName address phone semester parallel career description');
+    if (!user) {
+      throw new Error('User not found');
+    }
+    logger.info(`Usuario recuperado: ${userId}`);
+    res.json(user);
+  } catch (err) {
+    const { status, response } = handleErrors(err, userId);
+    res.status(status).json(response);
   }
-
-  req.redisClient.get(userId, async (err, redisToken) => {
-    if (err) {
-      return res.status(500).json({ message: err.message });
-    }
-
-    if (redisToken !== token) {
-      return res.status(401).json({ message: 'Token no válido' });
-    }
-
-    try {
-      const user = await User.findById(userId, 'username email firstName lastName address phone semester parallel career description');
-      if (user == null) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
-      }
-      res.json(user);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  });
 });
 
 module.exports = router;
