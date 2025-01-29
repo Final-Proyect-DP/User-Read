@@ -2,13 +2,21 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 const logger = require('../config/logger');
-const { verifyToken } = require('../middlewares/authMiddleware');
+const { verifyToken, handleAuthError } = require('../middlewares/authMiddleware');
 const handleErrors = require('../utils/handleErrors');
 
 /**
  * @swagger
- * /users/{id}:
+ * tags:
+ *   name: Users
+ *   description: API para gestión de usuarios
+ */
+
+/**
+ * @swagger
+ * /api/users/{id}:
  *   get:
+ *     tags: [Users]
  *     summary: Obtiene un usuario por ID
  *     parameters:
  *       - in: path
@@ -43,20 +51,15 @@ const handleErrors = require('../utils/handleErrors');
  *                   type: string
  *                 phone:
  *                   type: string
- *                 image:
- *                   type: object
- *                   properties:
- *                     data:
- *                       type: string
- *                       format: base64
- *                     contentType:
- *                       type: string
  *       404:
  *         description: Usuario no encontrado
  *       401:
  *         description: Token no válido
  */
-router.get('/:id', verifyToken, async (req, res) => {
+router.get('/:id', 
+  verifyToken, 
+  handleAuthError, 
+  async (req, res) => {
   const userId = req.params.id;
 
   try {

@@ -1,41 +1,62 @@
 const jwt = require('jsonwebtoken');
 const redisClient = require('../config/redisConfig');
 const logger = require('../config/logger');
-const handleErrors = require('../utils/handleErrors');
 
 const verifyToken = (req, res, next) => {
   const { token } = req.query;
   const { id } = req.params;
 
-  try {
-    if (!token || !id) {
-      throw new Error('Token o ID faltante');
+  if (!token || !id) {
+    logger.warn('Token o ID faltante en la solicitud');
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Token o ID faltante' 
+    });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (jwtErr, decoded) => {
+    if (jwtErr) {
+      logger.error(`Error al verificar JWT: ${jwtErr.message}`);
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Token JWT no válido' 
+      });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (jwtErr, decoded) => {
-      if (jwtErr) {
-        throw new Error('JWT inválido');
+    redisClient.get(id, (redisErr, reply) => {
+      if (redisErr) {
+        logger.error(`Error al consultar Redis: ${redisErr.message}`);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Error al verificar la sesión' 
+        });
       }
 
-      redisClient.get(id, (redisErr, reply) => {
-        if (redisErr) {
-          throw new Error('Error en Redis');
-        }
+      if (!reply || reply !== token) {
+        logger.warn(`Token inválido o expirado para usuario ${id}`);
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Sesión inválida o expirada' 
+        });
+      }
 
-        if (reply !== token) {
-          throw new Error('Token no válido para este usuario');
-        }
-
-        logger.info(`Token verificado para usuario ${id}`);
-        next();
-      });
+      logger.info(`Token verificado para usuario ${id}`);
+      req.userId = id; // Opcional: pasar el ID del usuario al siguiente middleware
+      next();
     });
-  } catch (error) {
-    const { status, response } = handleErrors(error, id);
-    res.status(status).json(response);
-  }
+  });
+};
+
+// Manejador de errores por si algo falla en el proceso
+const handleAuthError = (err, req, res, next) => {
+  logger.error('Error en autenticación:', err);
+  return res.status(500).json({
+    success: false,
+    message: 'Error en el proceso de autenticación'
+  });
 };
 
 module.exports = {
-  verifyToken
+  verifyToken,
+  handleAuthError
 };
