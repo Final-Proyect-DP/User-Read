@@ -8,6 +8,8 @@ const userDeleteConsumer = require('./consumers/userDeleteConsumer');
 const userEditConsumer = require('./consumers/userEditConsumer');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const authLoginConsumer = require('./consumers/authLoginConsumer');
+const userLogoutConsumer = require('./consumers/userLogoutConsumer');
 
 const app = express();
 const PORT = process.env.PORT || 3023;
@@ -47,7 +49,10 @@ const startServer = async () => {
     await Promise.all([
       userCreateConsumer.run(),
       userDeleteConsumer.run(),
-      userEditConsumer.run()  // Agregar el nuevo consumidor
+      userEditConsumer.run(),
+      authLoginConsumer.run(),,
+      userLogoutConsumer.run()
+
     ]);
 
     app.listen(PORT, '0.0.0.0', () => {
