@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const connectDB = require('./config/dbConfig');
 const logger = require('./config/logger');
 const usersRouter = require('./routes/users');
@@ -14,6 +15,17 @@ const userLogoutConsumer = require('./consumers/userLogoutConsumer');
 const app = express();
 const PORT = process.env.PORT || 3023;
 
+// Configuración y uso de CORS
+const corsOptions = {
+  origin: '*',  // Permite todos los orígenes
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
 // Configuración de Swagger
 const swaggerOptions = {
   definition: {
@@ -25,7 +37,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT}`,
+        url: `http://3.89.9.17:${process.env.PORT}`,
         description: 'Servidor de desarrollo'
       }
     ]
@@ -50,15 +62,15 @@ const startServer = async () => {
       userCreateConsumer.run(),
       userDeleteConsumer.run(),
       userEditConsumer.run(),
-      authLoginConsumer.run(),,
+      authLoginConsumer.run(),
       userLogoutConsumer.run()
-
     ]);
 
     app.listen(PORT, '0.0.0.0', () => {
-      logger.info(`Servidor corriendo en http://0.0.0.0:${PORT}`);
+      logger.info(`Servidor corriendo en http://3.89.9.17:${PORT}`);
     });
   } catch (error) {
+  process.exit(1);
     logger.error('Error al iniciar el servidor:', error);
     process.exit(1);
   }

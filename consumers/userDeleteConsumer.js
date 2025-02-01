@@ -1,6 +1,6 @@
 const kafka = require('../config/kafkaConfig');
 const { decryptMessage } = require('../services/userService');
-const User = require('../models/user');
+const User = require('../models/User');  // Cambiado de '../models/user' a '../models/User'
 const logger = require('../config/logger');
 require('dotenv').config();
 

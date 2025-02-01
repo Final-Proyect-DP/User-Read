@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/user');
+const User = require('../models/User');  // Cambiado de '../models/user' a '../models/User'
 const logger = require('../config/logger');
 const { verifyToken, handleAuthError } = require('../middlewares/authMiddleware');
 const handleErrors = require('../utils/handleErrors');
