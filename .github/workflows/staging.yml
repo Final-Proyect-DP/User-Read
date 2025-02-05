@@ -104,7 +104,7 @@ jobs:
             sudo docker pull byvoxel/user-read:staging
             sudo docker run -d \
               --name user-read \
-              -p 3020:3020 \
+              -p 3023:3023 \
               --restart unless-stopped \
               byvoxel/user-read:staging
             sudo docker system prune -af --volumes || true
