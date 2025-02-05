@@ -7,10 +7,10 @@ const verifyToken = (req, res, next) => {
   const { id } = req.params;
 
   if (!token || !id) {
-    logger.warn('Token o ID faltante en la solicitud');
+    logger.warn('Missing token or ID in request');
     return res.status(401).json({ 
       success: false, 
-      message: 'Token o ID faltante' 
+      message: 'Missing token or ID' 
     });
   }
 
@@ -25,22 +25,22 @@ const verifyToken = (req, res, next) => {
 
     redisClient.get(id, (redisErr, reply) => {
       if (redisErr) {
-        logger.error(`Error al consultar Redis: ${redisErr.message}`);
+        logger.error(`Error querying Redis: ${redisErr.message}`);
         return res.status(500).json({ 
           success: false, 
-          message: 'Error al verificar la sesión' 
+          message: 'Error verifying session' 
         });
       }
 
       if (!reply || reply !== token) {
-        logger.warn(`Token inválido o expirado para usuario ${id}`);
+        logger.warn(`Invalid or expired token for user ${id}`);
         return res.status(401).json({ 
           success: false, 
-          message: 'Sesión inválida o expirada' 
+          message: 'Invalid or expired session' 
         });
       }
 
-      logger.info(`Token verificado para usuario ${id}`);
+      logger.info(`Token verified for user ${id}`);
       req.userId = id; // Opcional: pasar el ID del usuario al siguiente middleware
       next();
     });
@@ -49,10 +49,10 @@ const verifyToken = (req, res, next) => {
 
 // Manejador de errores por si algo falla en el proceso
 const handleAuthError = (err, req, res, next) => {
-  logger.error('Error en autenticación:', err);
+  logger.error('Authentication error:', err);
   return res.status(500).json({
     success: false,
-    message: 'Error en el proceso de autenticación'
+    message: 'Error in authentication process'
   });
 };
 

@@ -9,7 +9,7 @@ const handleErrors = require('../utils/handleErrors');
  * @swagger
  * tags:
  *   name: Users
- *   description: API para gestión de usuarios
+ *   description: API for user management
  */
 
 /**
@@ -17,23 +17,23 @@ const handleErrors = require('../utils/handleErrors');
  * /api/users/{id}:
  *   get:
  *     tags: [Users]
- *     summary: Obtiene un usuario por ID
+ *     summary: Get a user by ID
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
+ *         description: User ID
  *       - in: query
  *         name: token
  *         required: true
  *         schema:
  *           type: string
- *         description: Token de autenticación
+ *         description: Authentication token
  *     responses:
  *       200:
- *         description: Usuario encontrado
+ *         description: User found
  *         content:
  *           application/json:
  *             schema:
@@ -52,9 +52,9 @@ const handleErrors = require('../utils/handleErrors');
  *                 phone:
  *                   type: string
  *       404:
- *         description: Usuario no encontrado
+ *         description: User not found
  *       401:
- *         description: Token no válido
+ *         description: Invalid token
  */
 router.get('/:id', 
   verifyToken, 
@@ -67,7 +67,7 @@ router.get('/:id',
     if (!user) {
       throw new Error('User not found');
     }
-    logger.info(`Usuario recuperado: ${userId}`);
+    logger.info(`User retrieved: ${userId}`);
     res.json(user);
   } catch (err) {
     const { status, response } = handleErrors(err, userId);

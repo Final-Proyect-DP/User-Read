@@ -31,14 +31,14 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'API de Usuarios - Servicio de Lectura',
+      title: 'Users API - Read Service',
       version: '1.0.0',
-      description: 'API para la gestión de usuarios - Microservicio de lectura'
+      description: 'API for user management - Read Microservice'
     },
     servers: [
       {
         url: `http://3.89.9.17:${process.env.PORT}`,
-        description: 'Servidor de desarrollo'
+        description: 'Development server'
       }
     ]
   },
@@ -67,11 +67,10 @@ const startServer = async () => {
     ]);
 
     app.listen(PORT, '0.0.0.0', () => {
-      logger.info(`Servidor corriendo en http://3.89.9.17:${PORT}`);
+      logger.info(`Server running at http://3.89.9.17:${PORT}`);
     });
   } catch (error) {
-  process.exit(1);
-    logger.error('Error al iniciar el servidor:', error);
+    logger.error('Error starting server:', error);
     process.exit(1);
   }
 };
@@ -79,6 +78,6 @@ const startServer = async () => {
 startServer();
 
 process.on('unhandledRejection', (err) => {
-  logger.error('Error no controlado:', err);
+  logger.error('Unhandled error:', err);
   process.exit(1);
 });

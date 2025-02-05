@@ -1,8 +1,8 @@
-name: Deploy Pull Request to Test Environment
+name: Deploy Pull Request to main Environment
 
 on:
-  pull_request:
-    branches: [staging]
+  push:
+    branches: [main]
 
 jobs:
   build_docker_image:
@@ -15,6 +15,42 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: read .env file
+        env:
+          PORT: ${{ secrets.PORT }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          ENCRYPTION_IV: ${{ secrets.ENCRYPTION_IV }}
+          KAFKA_CLIENT_ID: ${{ secrets.KAFKA_CLIENT_ID }}
+          KAFKA_BROKER: ${{ secrets.KAFKA_BROKER }}
+          KAFKA_TOPIC: ${{ secrets.KAFKA_TOPIC }}
+          KAFKA_TOPIC_USER_CREATE: ${{ secrets.KAFKA_TOPIC_USER_CREATE }}
+          KAFKA_TOPIC_LOGOUT: ${{ secrets.KAFKA_TOPIC_LOGOUT }}
+          KAFKA_TOPIC_LOGIN: ${{ secrets.KAFKA_TOPIC_LOGIN }}
+          KAFKA_TOPIC_DELETE: ${{ secrets.KAFKA_TOPIC_DELETE }}
+          KAFKA_TOPIC_PASS_RESET: ${{ secrets.KAFKA_TOPIC_PASS_RESET }}
+          KAFKA_TOPIC_EDIT_USER: ${{ secrets.KAFKA_TOPIC_EDIT_USER }}
+        run: |
+          echo "PORT=${PORT}" > .env
+          echo "MONGODB_URI=${MONGODB_URI}" >> .env
+          echo "REDIS_HOST=${REDIS_HOST}" >> .env
+          echo "REDIS_PORT=${REDIS_PORT}" >> .env
+          echo "JWT_SECRET=${JWT_SECRET}" >> .env
+          echo "ENCRYPTION_KEY=${ENCRYPTION_KEY}" >> .env
+          echo "ENCRYPTION_IV=${ENCRYPTION_IV}" >> .env
+          echo "KAFKA_CLIENT_ID=${KAFKA_CLIENT_ID}" >> .env
+          echo "KAFKA_BROKER=${KAFKA_BROKER}" >> .env
+          echo "KAFKA_TOPIC=${KAFKA_TOPIC}" >> .env
+          echo "KAFKA_TOPIC_USER_CREATE=${KAFKA_TOPIC_USER_CREATE}" >> .env
+          echo "KAFKA_TOPIC_LOGOUT=${KAFKA_TOPIC_LOGOUT}" >> .env
+          echo "KAFKA_TOPIC_LOGIN=${KAFKA_TOPIC_LOGIN}" >> .env
+          echo "KAFKA_TOPIC_DELETE=${KAFKA_TOPIC_DELETE}" >> .env
+          echo "KAFKA_TOPIC_PASS_RESET=${KAFKA_TOPIC_PASS_RESET}" >> .env
+          echo "KAFKA_TOPIC_EDIT_USER=${KAFKA_TOPIC_EDIT_USER}" >> .env
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -29,17 +65,16 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: byvoxel/user-create
+          images: byvoxel/user-read
           tags: |
-            type=raw,value=pr-${{ github.event.pull_request.number }}
-            type=sha
-
+            type=raw,value=staging
+          
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: byvoxel/user-read:staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -50,32 +85,26 @@ jobs:
     strategy:
       matrix:
         ec2_instance: 
-          - ec2-204-236-220-83.compute-1.amazonaws.com
-          - ec2-54-90-221-171.compute-1.amazonaws.com
+          - ec2-44-201-241-144.compute-1.amazonaws.com
 
     steps:
-      - name: Configure SSH Agent
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-
       - name: Deploy Container
-        uses: appleboy/ssh-action@v1.1.3
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ matrix.ec2_instance }}
           username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          script_timeout: 120
-          envs: TAG=${{ needs.build_docker_image.outputs.image_tag }}
+          timeout: "120s"
           script: |
             set -e
-            echo "Deploying image: $TAG"
-            sudo docker stop user-create || true
-            sudo docker rm user-create || true
-            sudo docker pull byvoxel/user-create:$TAG
+            echo "Deploying image: byvoxel/user-read:staging"
+            sudo docker stop user-read || true
+            sudo docker rm user-read || true
+            sudo docker pull byvoxel/user-read:staging
             sudo docker run -d \
-              --name user-create \
-              -p 3000:3020 \
+              --name user-read \
+              -p 3020:3020 \
               --restart unless-stopped \
-              byvoxel/user-create:$TAG
+              byvoxel/user-read:staging
             sudo docker system prune -af --volumes || true

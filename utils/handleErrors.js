@@ -1,56 +1,56 @@
 const logger = require('../config/logger');
 
 const handleErrors = (error, id = '') => {
-  logger.error(`Error en la operación ${id ? `para ID ${id}` : ''}:`, error);
+  logger.error(`Error in operation ${id ? `for ID ${id}` : ''}:`, error);
 
   const errorResponses = {
-    'Token o ID faltante': {
+    'Missing Token or ID': {
       status: 401,
       response: {
         success: false,
-        message: 'Token o ID faltante en la solicitud'
+        message: 'Missing token or ID in request'
       }
     },
-    'JWT inválido': {
+    'Invalid JWT': {
       status: 401,
       response: {
         success: false,
-        message: 'Token JWT no válido'
+        message: 'Invalid JWT token'
       }
     },
-    'Error en Redis': {
+    'Redis Error': {
       status: 500,
       response: {
         success: false,
-        message: 'Error al verificar el token en Redis'
+        message: 'Error verifying token in Redis'
       }
     },
-    'Token no válido para este usuario': {
+    'Invalid token for this user': {
       status: 401,
       response: {
         success: false,
-        message: 'Token no válido para este usuario'
+        message: 'Invalid token for this user'
       }
     },
-    'Campos requeridos': {
+    'Required fields': {
       status: 400,
       response: {
         success: false,
         message: error.message
       }
     },
-    'El nombre de usuario ya existe': {
+    'Username already exists': {
       status: 400,
       response: {
         success: false,
-        message: 'El nombre de usuario ya existe'
+        message: 'Username already exists'
       }
     },
     'ValidationError': {
       status: 400,
       response: {
         success: false,
-        message: 'Error de validación',
+        message: 'Validation error',
         details: error.message
       }
     },
@@ -58,7 +58,7 @@ const handleErrors = (error, id = '') => {
       status: 404,
       response: {
         success: false,
-        message: 'Usuario no encontrado'
+        message: 'User not found'
       }
     }
   };
@@ -67,7 +67,7 @@ const handleErrors = (error, id = '') => {
     status: 500,
     response: {
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Internal server error'
     }
   };
 };

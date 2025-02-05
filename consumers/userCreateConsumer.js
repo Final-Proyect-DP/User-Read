@@ -1,7 +1,7 @@
 const kafka = require('../config/kafkaConfig');
 const mongoose = require('mongoose');
 const userService = require('../services/userService');
-const User = require('../models/User');  // Cambiado de '../models/user' a '../models/User'
+const User = require('../models/User');
 const logger = require('../config/logger');
 require('dotenv').config();
 
@@ -19,19 +19,19 @@ const run = async () => {
         try {
           const encryptedMessage = JSON.parse(message.value.toString());
           const decryptedMessage = userService.decryptMessage(encryptedMessage);
-          logger.info('Mensaje descifrado:', decryptedMessage);
+          logger.info('Decrypted message:', decryptedMessage);
 
           const userData = JSON.parse(decryptedMessage);
           const user = new User(userData);
           await user.save();
-          logger.info(`Usuario insertado en la base de datos: ${user._id}`);
+          logger.info(`User inserted in database: ${user._id}`);
         } catch (error) {
-          logger.error('Error al procesar el mensaje de Kafka:', error);
+          logger.error('Error processing Kafka message:', error);
         }
       },
     });
   } catch (error) {
-    logger.error('Create Consumer: Error iniciando el consumidor:', error);
+    logger.error('Create Consumer: Error starting consumer:', error);
     throw error;
   }
 };

@@ -8,7 +8,7 @@ const redisClient = redis.createClient({
 });
 
 redisClient.on('error', (err) => {
-  logger.error('Error al conectar a Redis:', err);
+  logger.error('Error connecting to redis:', err);
 });
 
 module.exports = redisClient;

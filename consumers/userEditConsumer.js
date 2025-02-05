@@ -1,21 +1,21 @@
 const kafka = require('../config/kafkaConfig');
 const mongoose = require('mongoose');
 const userService = require('../services/userService');
-const User = require('../models/User');  // Cambiado de '../models/user' a '../models/User'
+const User = require('../models/User');
 const logger = require('../config/logger');
 require('dotenv').config();
 
-// Cambiado solo el groupId
+// Only groupId changed
 const consumer = kafka.consumer({ groupId: 'read-service-update-group' });
 
 const run = async () => {
   try {
     await consumer.connect();
-    logger.info('Update Consumer: Conectado a Kafka');
+    logger.info('Update Consumer: Connected to Kafka');
     
-    // Cambiado solo el topic (debe existir en .env)
+    // Only topic changed (must exist in .env)
     await consumer.subscribe({ 
-      topic: process.env.KAFKA_TOPIC_EDIT_USER, // Nuevo nombre de variable
+      topic: process.env.KAFKA_TOPIC_EDIT_USER,
       fromBeginning: true 
     });
 
@@ -26,22 +26,22 @@ const run = async () => {
           const decryptedMessage = userService.decryptMessage(encryptedMessage);
           const userData = JSON.parse(decryptedMessage);
 
-          // Cambio principal: Update en lugar de Create
+          // Main change: Update instead of Create
           await User.findByIdAndUpdate(
-            userData._id,  // Asume que el mensaje incluye el _id
-            userData,      // Actualiza con todos los campos recibidos
-            { new: true }  // Retorna el documento actualizado
+            userData._id,  // Assumes message includes _id
+            userData,      // Updates with all received fields
+            { new: true }  // Returns updated document
           );
 
-          logger.info(`Usuario actualizado: ${userData._id}`);
+          logger.info(`User updated: ${userData._id}`);
 
         } catch (error) {
-          logger.error('Error procesando mensaje:', error.message);
+          logger.error('Error processing message:', error.message);
         }
       },
     });
   } catch (error) {
-    logger.error('Error en consumer de actualización:', error);
+    logger.error('Error in update consumer:', error);
   }
 };
 
