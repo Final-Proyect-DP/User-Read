@@ -4,14 +4,13 @@ const userService = require('../services/userService');
 const redisUtils = require('../utils/redisUtils');
 require('dotenv').config();
 
-const consumer = kafka.consumer({ groupId: 'login-service-read-group' });
+const consumer = kafka.consumer({ groupId: 'User-Read-Login-Consumer' });
 
 const run = async () => {
   try {
     await consumer.connect();
-    logger.info('Create Consumer: Kafka consumer connected');
     await consumer.subscribe({ topic: process.env.KAFKA_TOPIC_LOGIN, fromBeginning: true });
-    logger.info(`Create Consumer: Subscribed to topic: ${process.env.KAFKA_TOPIC_LOGIN}`);
+    logger.info(`Login Consumer: Subscribed to topic: ${process.env.KAFKA_TOPIC_LOGIN}`);
 
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {

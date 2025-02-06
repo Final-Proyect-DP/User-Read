@@ -4,38 +4,38 @@ const userService = require('../services/userService');
 const redisUtils = require('../utils/redisUtils');
 require('dotenv').config();
 
-const consumer = kafka.consumer({ groupId: 'logout-service-read-group' });
+const consumer = kafka.consumer({ groupId: 'User-Read-Logout-Consumer' });
 
 const run = async () => {
   try {
     await consumer.connect();
-    logger.info('Create Consumer: Kafka consumer connected');
+    logger.info('Logout Consumer: Kafka consumer connected');
     await consumer.subscribe({ topic: process.env.KAFKA_TOPIC_LOGOUT, fromBeginning: true });
-    logger.info(`Create Consumer: Subscribed to topic: ${process.env.KAFKA_TOPIC_LOGOUT}`);
+    logger.info(`Logout Consumer: Subscribed to topic: ${process.env.KAFKA_TOPIC_LOGOUT}`);
 
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
         try {
           const encryptedMessage = JSON.parse(message.value.toString());
-          logger.info('Mensaje cifrado recibido:', encryptedMessage);
+          logger.info('Encrypted message received:', encryptedMessage);
           
           const decryptedMessage = userService.decryptMessage(encryptedMessage);
           
           if (!decryptedMessage || !decryptedMessage.userId) {
-            throw new Error('Mensaje descifrado inválido o userId no encontrado');
+            throw new Error('Invalid decrypted message or userId not found');
           }
           
-          logger.info(`Procesando cierre de sesión para usuario: ${decryptedMessage.userId}`);
+          logger.info(`Processing logout for user: ${decryptedMessage.userId}`);
           await redisUtils.deleteToken(decryptedMessage.userId);
-          logger.info(`Token eliminado exitosamente para usuario: ${decryptedMessage.userId}`);
+          logger.info(`Token successfully deleted for user: ${decryptedMessage.userId}`);
 
         } catch (error) {
-          logger.error('Error procesando mensaje de cierre de sesión:', error.message);
+          logger.error('Error processing logout message:', error.message);
         }
       },
     });
   } catch (error) {
-    logger.error('login Consumer: Error iniciando el consumidor:', error);
+    logger.error('Login Consumer: Error starting consumer:', error);
     throw error;
   }
 };

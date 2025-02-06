@@ -6,12 +6,13 @@ const logger = require('../config/logger');
 require('dotenv').config();
 
 // Only groupId changed
-const consumer = kafka.consumer({ groupId: 'read-service-update-group' });
+const consumer = kafka.consumer({ groupId: 'User-Read-Edit-Consumer' });
 
 const run = async () => {
   try {
     await consumer.connect();
-    logger.info('Update Consumer: Connected to Kafka');
+    logger.info(`Edit Consumer: Subscribed to topic: ${process.env.KAFKA_TOPIC_EDIT_USER}`);
+
     
     // Only topic changed (must exist in .env)
     await consumer.subscribe({ 
@@ -28,8 +29,8 @@ const run = async () => {
 
           // Main change: Update instead of Create
           await User.findByIdAndUpdate(
-            userData._id,  // Assumes message includes _id
-            userData,      // Updates with all received fields
+            userData._id,  // Requires _id in message
+            userData,      // Updates all received fields
             { new: true }  // Returns updated document
           );
 
