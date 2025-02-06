@@ -1,0 +1,45 @@
+const kafka = require('../config/kafkaConfig');
+const logger = require('../config/logger');
+const userService = require('../services/userService');
+const redisUtils = require('../utils/redisUtils');
+require('dotenv').config();
+
+const consumer = kafka.consumer({ groupId: 'User-Read-Login-Consumer' });
+
+const run = async () => {
+  try {
+    await consumer.connect();
+    await consumer.subscribe({ topic: process.env.KAFKA_TOPIC_LOGIN, fromBeginning: true });
+    logger.info(`Login Consumer: Subscribed to topic: ${process.env.KAFKA_TOPIC_LOGIN}`);
+
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        try {
+          const encryptedMessage = JSON.parse(message.value.toString());
+          const decryptedMessage = userService.decryptMessage(encryptedMessage);
+          logger.info('Decrypted message:', decryptedMessage);
+
+          const { userId, token } = decryptedMessage;
+          if (!userId || !token) {
+            throw new Error('Message does not contain userId or token');
+          }
+
+          // Use redisUtils.setToken instead of storeUserSession
+          await redisUtils.setToken(userId, token);
+          logger.info(`Token stored in Redis for user ${userId}`);
+
+        } catch (error) {
+          logger.error('Error processing message:', {
+            error: error.message,
+            stack: error.stack
+          });
+        }
+      },
+    });
+  } catch (error) {
+    logger.error('Login Consumer: Error starting consumer:', error);
+    throw error;
+  }
+};
+
+module.exports = { run };

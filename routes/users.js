@@ -1,28 +1,39 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const User = require('../models/User');  // Cambiado de '../models/user' a '../models/User'
+const logger = require('../config/logger');
+const { verifyToken, handleAuthError } = require('../middlewares/authMiddleware');
+const handleErrors = require('../utils/handleErrors');
 
 /**
  * @swagger
- * /users/{id}:
+ * tags:
+ *   name: Users
+ *   description: API for user management
+ */
+
+/**
+ * @swagger
+ * /api/users/{id}:
  *   get:
- *     summary: Obtiene un usuario por ID
+ *     tags: [Users]
+ *     summary: Get a user by ID
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
+ *         description: User ID
  *       - in: query
  *         name: token
  *         required: true
  *         schema:
  *           type: string
- *         description: Token de autenticación
+ *         description: Authentication token
  *     responses:
  *       200:
- *         description: Usuario encontrado
+ *         description: User found
  *         content:
  *           application/json:
  *             schema:
@@ -40,46 +51,28 @@ const User = require('../models/User');
  *                   type: string
  *                 phone:
  *                   type: string
- *                 image:
- *                   type: object
- *                   properties:
- *                     data:
- *                       type: string
- *                       format: base64
- *                     contentType:
- *                       type: string
  *       404:
- *         description: Usuario no encontrado
+ *         description: User not found
  *       401:
- *         description: Token no válido
+ *         description: Invalid token
  */
-router.get('/:id', async (req, res) => {
-  const token = req.query.token;
+router.get('/:id', 
+  verifyToken, 
+  handleAuthError, 
+  async (req, res) => {
   const userId = req.params.id;
 
-  if (!token) {
-    return res.status(401).json({ message: 'Token no válido' });
+  try {
+    const user = await User.findById(userId, 'username email firstName lastName address phone semester parallel career description');
+    if (!user) {
+      throw new Error('User not found');
+    }
+    logger.info(`User retrieved: ${userId}`);
+    res.json(user);
+  } catch (err) {
+    const { status, response } = handleErrors(err, userId);
+    res.status(status).json(response);
   }
-
-  req.redisClient.get(userId, async (err, redisToken) => {
-    if (err) {
-      return res.status(500).json({ message: err.message });
-    }
-
-    if (redisToken !== token) {
-      return res.status(401).json({ message: 'Token no válido' });
-    }
-
-    try {
-      const user = await User.findById(userId, 'username email firstName lastName address phone semester parallel career description');
-      if (user == null) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
-      }
-      res.json(user);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  });
 });
 
 module.exports = router;
