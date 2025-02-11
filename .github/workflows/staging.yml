@@ -1,4 +1,4 @@
-name: Deploy Pull Request to main Environment
+name: Deploy to staging Environment
 
 on:
   push:
