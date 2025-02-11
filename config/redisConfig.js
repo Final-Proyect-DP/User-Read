@@ -10,4 +10,8 @@ redisClient.on('error', (err) => {
   logger.error('Error connecting to redis:', err);
 });
 
+redisClient.on('connect', () => {
+  logger.info('Successfully connected to Redis');
+});
+
 module.exports = redisClient;
